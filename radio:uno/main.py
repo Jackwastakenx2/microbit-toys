@@ -1,4 +1,4 @@
-# micro:uno Radio USER MANUAL
+# radio:uno USER MANUAL
 
 # Starting Play
 # After Pressing A/B to Host/Join a Game,
@@ -74,12 +74,15 @@ assignStateFunction(3,scrollLoopStateFunc("Connecting..."))
 
 #bytes are: [who, who, what, with]
 radio.config(length=4,queue=15)
+
 orb = 10
 
 radio.on()
 display.scroll("UNO",wait=True,delay=150)
 sleep(100)
 changeState(0)
+group = 0
+passwo = 0
 # Code in a 'while True:' loop repeats forever
 while True:
     if state==0:
@@ -90,12 +93,31 @@ while True:
     elif state==1:
         passw = inpPass()
         passb: bytearray = bytearray(passw.to_bytes(2,"big"))
-        passb.append(0b01)
-        passb.append(0b0)
+        passb.extend([0b01,0b0])
         print(passb)
         radio.send_bytes(passb)
     elif state==2:
-        pass
+        passwo = inpPass()
+        for i in range(256):
+            radio.config(group=i)
+            radio.send_bytes(bytearray([0b0,0b0,0b11,0b0]))
+            sleep(200)
+            allmsgs = []
+            while True:
+                reci = radio.receive_bytes()
+                if not reci:
+                    break
+                allmsgs.append(reci)
+            unused = True
+            for msg in allmsgs:
+                if msg==bytearray([0b0,0b0,0b001,0b0]):
+                    unused = False
+                    break
+            if unused:
+                group=i
+                break
+                
+        
     sleep(10)
         
     
